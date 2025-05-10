@@ -1,0 +1,81 @@
+Zasady, które powinien spełniać system RESTful:
+    1. Każdy zasób jest identyfikowany przez konkretny URI (Uniform Resource Identifier – łańcuch znaków)
+    2. Manipulacja danymi powinna odbywać się poprzez metody http – GET / POST /PUT / DELETE;
+    3. Reprezentacja zasobu powinna być zależna od żądania, a nie od adresu URI (URI powinien pozostawać niezmienny, zmieniać się powinien tylko typ żądania);
+    4. Powinien być bezstanowy (wynika to z korzystania z protokołu http);
+RESTowe API może udostępniać zasoby w kilku formatach (różny content-type w nagłówku zapytania).
+Do zbudowania RESTful API wykorzystamy moduł Spring MVC, JAXB (Java Architecture for XML Binding - zestaw adnotacji pozwalających
+na konwersję obiektów do formatu XML) oraz Java JSON Processing API do konwersji obiektów na JSON (sposobem realizacji tego standardu jest Jackson Databind).
+
+Przykład prostego controllera:
+@Controller
+@RequestMapping("/base")
+public class BaseController {
+
+    @GetMapping("/hello")
+    @ResponseBody
+    public String getHello() {
+        return "Hello!";
+    }
+}
+
+Rządanie GET wysłane pod URI localhost:8080/base/hello  zwraca napis Hello!
+Adnotacja @ResponseBody włącza automatyczną serializację zwracanego obiektu (Stringa) na obiekt HttpResponse.
+Opcjonalnie zamiast @GetMapping możemy wykorzystać:
+
+@RequestMapping(path = "/hello", method = RequestMethod.GET)
+
+Po zastosowaniu adnotacji @RestController w deklaracji klasy, używanie adnotacji @ResponseBody staje się zbędne:
+@RestController
+@RequestMapping("/base")
+public class BaseController {
+
+    @GetMapping("/hello")
+    public String getHello() {
+        return "Hello!";
+    }
+}
+
+
+Zasady budowania poprawnego URI:
+    • hierarchiczna budowa ścieżki odpowiadająca strukturze zasobów;
+    • brak czasowników;
+Przykłady hierarchicznej budowy:
+/cars – zwraca listę wszystkich aut z bazy;
+/cars/1 – zwraca auto o numerze id 1;
+/cars/1/engines – zwraca wszystkie silniki auta o numerze id 1;
+/cars/1/engines/1 – zwraca silnik o numerze id 1 auta o numerze id 1;
+
+@RequestParam – służy do wyciągnięcia parametrów query z żądania  - uzywane najczesciej do jakiegos wyszukiwania np. po konkretnej marce i modelu
+@PathVariable – służy do przekazywania parametrów przez URI - pobieranie danych prosto z danego URI; - pobieranie najczesciej konkretnego zasobu o konkretnym id
+
+
+
+
+Zwracanie danych w postaci XML:
+Nad deklaracją klasy CarDto dopisujemy adnotację @XmlRootElement:
+
+@XmlRootElement
+public class CarDto {
+}
+
+Sposób nr 1 – negocjacja reprezentacji zasobu:
+Polega na odpowiednim ustawieniu nagłówka Accept na wartość:
+    • application/json
+    • application/xml
+
+Sposób nr 2 – sterowanie z poziomu metody obsługującej dany endpoint:
+Polega na dodaniu do adnotacji @GetMapping/@RequestMapping atrybutu produces z jedną lub wieloma wartościami (nie dodajemy wtedy nagłówka Accept w żądaniu):
+    • produces = MediaType.APPLICATION_XML_VALUE
+    • produces = MediaType.APPLICATION_JSON_VALUE
+Poniższy zapis spowoduje, że domyślnie będzie zwracany XML, ale jak zmienimy wartość dla nagłówka Accept to zwróci nam JSONa:
+produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}
+
+Mając np. tylko produces = XML i ustawiając Accept na JSON otrzymamy błąd z kodem 406 Not Acceptable.
+
+
+Zadanie: niech kursant stworzy endpoint, który zwróci liste samochodów w sposób posortowany po customowym parametrze (@RequestParam)
+@RequestParam(value = "property", defaultValue = "producer") String property) {
+}
+
+Niech metoda badz metody obsluguja zarowno format json jak i xml
