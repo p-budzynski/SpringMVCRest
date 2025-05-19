@@ -16,7 +16,7 @@ public class CarInitializer {
     @PostConstruct
     public void init() {
      Car car = new Car("BMW", "M3", "S58", 3000, 530, 580);
-     Car car1 = new Car("BMW", "740iL", "N55", 3000, 320, 400);
+     Car car1 = new Car("BMW", "740Li", "N55", 3000, 320, 400);
      carRepository.save(car);
      carRepository.save(car1);
     }

@@ -2,7 +2,9 @@ package pl.kurs.controller;
 
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.kurs.dto.CarDto;
 import pl.kurs.dto.CarDtoList;
@@ -11,6 +13,7 @@ import pl.kurs.mapper.CarMapper;
 import pl.kurs.service.CarService;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/cars")
@@ -19,10 +22,21 @@ public class CarController {
     private CarService carService;
     private CarMapper carMapper;
 
+//    @GetMapping(value = "/{id}", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+//    public ResponseEntity<CarDto> getById(@PathVariable("id") Long id) {
+//        Optional<Car> car = carService.getCarById(id);
+//        if (car.isPresent()) {
+//            return ResponseEntity.ok(carMapper.entityToDto(car.get()));
+//        } else {
+//            return ResponseEntity.notFound().build();
+//        }
+//    }
+
     @GetMapping(value = "/{id}", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public CarDto getById(@PathVariable("id") Long id) {
-        Car car = carService.getCarById(id);
-        return carMapper.entityToDto(car);
+    public ResponseEntity<CarDto> getById(@PathVariable("id") Long id) {
+        Optional<Car> car = carService.getCarById(id);
+        return car.map(c -> ResponseEntity.ok(carMapper.entityToDto(c)))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -49,7 +63,7 @@ public class CarController {
     @GetMapping(value = "/sort", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
     public CarDtoList getAllSortedByParams(
             @RequestParam(value = "property", defaultValue = "producer") String property,
-    @RequestParam(value = "direction", defaultValue = "asc") String direction) {
+            @RequestParam(value = "direction", defaultValue = "asc") String direction) {
 
         Sort.Direction sortDirection = direction.equalsIgnoreCase("desc")
                 ? Sort.Direction.DESC : Sort.Direction.ASC;
@@ -57,5 +71,27 @@ public class CarController {
         List<Car> cars = carService.getAllSorted(property, sortDirection);
         return new CarDtoList(carMapper.entitiesToDtos(cars));
     }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public CarDto createCar(@RequestBody CarDto carDto) {
+        Car car = carMapper.dtoToEntity(carDto);
+        Car savedCar = carService.saveCar(car);
+        return carMapper.entityToDto(savedCar);
+    }
+
+    @PutMapping
+    // sa dwa podejscia, mozna przekazac id w PutMapping jako PathVariable np. @PutMapping("/{id}"), badz przekazac je w srodku Dto
+    public CarDto updateCar(@RequestBody CarDto carDto) {
+        Car car = carMapper.dtoToEntityWithId(carDto);
+        Car updatedCar = carService.updateCar(car);
+        return carMapper.entityToDto(updatedCar);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteCarById(@PathVariable("id") Long id) {
+        carService.deleteCarById(id);
+    }
+
 
 }

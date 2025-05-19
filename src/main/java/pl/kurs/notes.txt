@@ -74,8 +74,152 @@ produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}
 Mając np. tylko produces = XML i ustawiając Accept na JSON otrzymamy błąd z kodem 406 Not Acceptable.
 
 
+Obsługa żądań przychodzących (przekazywanie w żądaniu JSON/XML):
+
+POST:
+Metody mogą być voidowe, jak i również mogą zwracać obiekt DTO
+
+@PostMapping
+public CarDto saveCar(@RequestBody CarDto carDto) {
+    Car savedCar = carJpaRepository.save(mapper.map(carDto));
+    return mapper.map(savedCar);
+
+}
+
+Request z ciałem w formacie JSON:
+{
+"producer":"Lamborghini",
+"model":"Aventador",
+"engineType":"6.5V12 Naturally aspirated",
+"displacementCm3":6498,
+"powerHp":740,
+"torqueNm":690
+}
+
+Request z ciałem w formacie XML:
+
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<carDto>
+<producer>Lamborghini</producer>
+<model>Huracan</model>
+<engineType>5.2V10Naturallyaspirated</engineType>
+<displacementCm3>5204</displacementCm3>
+<powerHp>610</powerHp>
+<torqueNm>560</torqueNm>
+</carDto>
+
+Ciało żądania jest przyjmowane domyślnie w każdej postaci, bez definiowania nagłówka Accept.
+Wymuszenie odpowiedniego formatu ciała żądania polega na dopisaniu do adnotacji
+@PostMapping/PutMapping/@RequestMapping atrybutu consumes, np.:
+
+@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+
+
+PUT:
+@PutMapping
+@Transactional
+public CarDto updateCar(@RequestBody CarDto carDto) {
+    Car carForUpdate = carJpaRepository.findById(carDto.getId()).orElseThrow();
+    BeanUtils.copyProperties(carDto, carForUpdate);
+    carJpaRepository.save(carForUpdate);
+    return mapper.map(carForUpdate, CarDto.class);
+}
+
+Adnotacja @Transasctional w powyższej implementacji jest wymagana.
+Request z ciałem w formacie JSON (zmieniona moc i moment obrotowy):
+{
+"id":1,
+"producer":"BMW",
+"model":"M3cs",
+"engineType":"3.0R6TwinTurbo",
+"displacementCm3":2979,
+"powerHp":550,
+"torqueNm":650
+}
+Ciało może również być w formacie XML.
+
+
+DELETE (dwie wersje):
+@DeleteMapping("/{id}")
+public void deleteCarById (@PathVariable(name = "id") long id) {
+    carJpaRepository.deleteById(id);
+}
+
+@DeleteMapping
+public void deleteCar (@RequestBody CarDto carDto) {
+    Car carForDelete = mapper.map(carDto, Car.class);
+    carJpaRepository.delete(carForDelete);
+}
+
+Request z ciałem w formacie JSON do kasowania (musi mieć atrybut id):
+{
+"id":5,
+"producer":"Lamborghini",
+"model":"Aventador",
+"engineType":"6.5V12Naturallyaspirated",
+"displacementCm3":6498,
+"powerHp":740,
+"torqueNm":690
+}
+Ciało może również być w formacie XML.
+
+
 Zadanie: niech kursant stworzy endpoint, który zwróci liste samochodów w sposób posortowany po customowym parametrze (@RequestParam)
 @RequestParam(value = "property", defaultValue = "producer") String property) {
 }
 
 Niech metoda badz metody obsluguja zarowno format json jak i xml
+
+Zadanko 2:
+Zadanie dla kursanta: zaimplementować metody:
+    • Kasującą wszystkie auta po przekazanej liście w formacie JSON oraz XML;
+    • Kasującą wszystkie auta w danym zakresie mocy/momentu obrotowego/pojemności
+
+
+Konfigurowanie i kontrolowanie odpowiedzi (RESPONSE):
+Kody odpowiedzi:
+    • 100-level (Informational) — serwer potwierdza żądanie;
+    • 200-level (Success) — serwer spełnił żądanie zgodnie z oczekiwaniami;
+    • 300-level (Redirection) — klient musi wykonać dalsze działania aby zakończyć żądanie;
+    • 400-level (Client error) — klient wysłał nieprawidłowe żądanie;
+    • 500-level (Server error) — serwer nie spełnił żądania z powodu błędu serwera;
+https://restfulapi.net/http-status-codes/
+
+Adnotacja @ResponseStatus:
+
+@ResponseStatus – adnotacja pozwalająca określić jaki kod HTTP ma posiadać odpowiedź naszej metody.
+Nie jest to idealny sposób, ponieważ zawsze kod odpowiedzi będzie stały – możemy przekazać tylko jeden kod.
+Przykład HttpStatus.CREATED:
+
+@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+@ResponseStatus(HttpStatus.CREATED)
+public CarDto saveCar(@RequestBody CarDto carDto) {
+    Car savedCar = carJpaRepository.save(mapper.map(carDto, Car.class));
+    return mapper.map(savedCar, CarDto.class);
+}
+
+Obiekty HttpEntity i ResponseEntity:
+ResponseEntity rozszerza HttpEntity o wygodny sposób definiowania obiektu odpowiedzi korzystając z wzorca builder.
+Dzięki tym obiektom jedna metoda może zwracać kilka kodów odpowiedzi.
+
+Przerobiona metoda getById()
+
+@GetMapping("/{id}")
+public ResponseEntity<CarDto> getById(@PathVariable(name = "id") long id) {
+    Optional<Car> carOptional = carJpaRepository.findById(id);
+    if(carOptional.isPresent())
+        return ResponseEntity.ok(mapper.map(carOptional.get(), CarDto.class));
+
+    return ResponseEntity.notFound().build();
+    //return new ResponseEntity<>(new CarDto(), HttpStatus.NOT_FOUND);
+}
+
+Ładniejsza forma:
+
+@GetMapping("/{id}")
+public ResponseEntity<CarDto> getById(@PathVariable(name = "id") long id) {
+    return carJpaRepository
+            .findById(id)
+            .map(x -> ResponseEntity.ok(mapper.map(x, CarDto.class)))
+            .orElse(new ResponseEntity(HttpStatus.NOT_FOUND));
+}
