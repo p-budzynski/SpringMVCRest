@@ -14,12 +14,12 @@ public interface CarRepository extends JpaRepository<Car, Long> {
 
     @Query("""
                 SELECT c FROM Car c
-                WHERE (:minPower IS NULL OR c.power_hp >= :minPower)
-                  AND (:maxPower IS NULL OR c.power_hp <= :maxPower)
-                  AND (:minTorque IS NULL OR c.torque_nm >= :minTorque)
-                  AND (:maxTorque IS NULL OR c.torque_nm <= :maxTorque)
-                  AND (:minDisplacement IS NULL OR c.displacement_cm3 >= :minDisplacement)
-                  AND (:maxDisplacement IS NULL OR c.displacement_cm3 <= :maxDisplacement)
+                WHERE (:minPower IS NULL OR c.powerHp >= :minPower)
+                  AND (:maxPower IS NULL OR c.powerHp <= :maxPower)
+                  AND (:minTorque IS NULL OR c.torqueNm >= :minTorque)
+                  AND (:maxTorque IS NULL OR c.torqueNm <= :maxTorque)
+                  AND (:minDisplacement IS NULL OR c.displacementCm3 >= :minDisplacement)
+                  AND (:maxDisplacement IS NULL OR c.displacementCm3 <= :maxDisplacement)
             """)
     List<Car> findBySpecs(@Param("minPower") Integer minPower,
                           @Param("maxPower") Integer maxPower,
