@@ -25,16 +25,16 @@ public class Car  {
     @Column(nullable = false)
     private String model;
 
-    @Column(nullable = false)
+    @Column(name = "engine_type", nullable = false)
     private String engineType;
 
-    @Column(nullable = false)
+    @Column(name = "displacement_cm3", nullable = false)
     private Integer displacementCm3;
 
-    @Column(nullable = false)
+    @Column(name = "power_hp", nullable = false)
     private Integer powerHp;
 
-    @Column(nullable = false)
+    @Column(name = "torque_nm", nullable = false)
     private Integer torqueNm;
 
     public Car(String producer, String model, String engineType, Integer displacementCm3, Integer powerHp, Integer torqueNm) {

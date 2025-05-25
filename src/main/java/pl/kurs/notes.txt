@@ -164,16 +164,7 @@ Request z ciałem w formacie JSON do kasowania (musi mieć atrybut id):
 Ciało może również być w formacie XML.
 
 
-Zadanie: niech kursant stworzy endpoint, który zwróci liste samochodów w sposób posortowany po customowym parametrze (@RequestParam)
-@RequestParam(value = "property", defaultValue = "producer") String property) {
-}
 
-Niech metoda badz metody obsluguja zarowno format json jak i xml
-
-Zadanko 2:
-Zadanie dla kursanta: zaimplementować metody:
-    • Kasującą wszystkie auta po przekazanej liście w formacie JSON oraz XML;
-    • Kasującą wszystkie auta w danym zakresie mocy/momentu obrotowego/pojemności
 
 
 Konfigurowanie i kontrolowanie odpowiedzi (RESPONSE):
@@ -223,3 +214,22 @@ public ResponseEntity<CarDto> getById(@PathVariable(name = "id") long id) {
             .map(x -> ResponseEntity.ok(mapper.map(x, CarDto.class)))
             .orElse(new ResponseEntity(HttpStatus.NOT_FOUND));
 }
+
+
+
+
+
+============================================
+
+Zadanie 1:
+niech kursant stworzy endpoint, który zwróci liste samochodów w sposób posortowany po customowym parametrze (@RequestParam)
+@RequestParam(value = "property", defaultValue = "producer") String property) {
+}
+
+Niech metoda badz metody obsluguja zarowno format json jak i xml
+
+
+Zadanko 2:
+Zadanie dla kursanta: zaimplementować metody:
+    • Kasującą wszystkie auta po przekazanej liście w formacie JSON oraz XML;
+    • Kasującą wszystkie auta w danym zakresie mocy/momentu obrotowego/pojemności
